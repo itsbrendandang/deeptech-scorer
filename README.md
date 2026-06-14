@@ -137,6 +137,14 @@ and are listed at the bottom of the report.
 - Designed to evaluate *any* deep tech company, including your own.
 - Setup: `python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt` (already done here).
 
+## Roadmap
+
+- **Crunchbase + PitchBook integration (planned).** Add these paid data sources to enrich
+  the funding and market signals beyond the free SEC EDGAR + Google Trends layer: full
+  round history, named investors with lead/follow detail, post-money valuations, and
+  funded-competitor counts (today these are entered by hand, e.g. via `--competitors`).
+  They would feed the same deterministic scorers — more inputs, same transparent rollup.
+
 ## License
 
 MIT — see [LICENSE](LICENSE). Built by Brendan Dang.
