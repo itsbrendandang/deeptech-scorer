@@ -125,3 +125,7 @@ and are listed at the bottom of the report.
   treat auto-pulled facts as leads to verify, not ground truth.
 - Designed to evaluate *any* deep tech company, including your own. Run Bioqore through it.
 - Setup: `python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt` (already done here).
+
+## License
+
+MIT — see [LICENSE](LICENSE). Built by Brendan Dang.
