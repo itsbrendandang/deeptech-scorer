@@ -31,6 +31,7 @@ class DimResult:
     evidence: str
     source: str
     overridden: bool = False
+    source_kind: str = "manual"   # manual | override | signal | missing
 
     @property
     def weighted(self) -> float:
@@ -54,6 +55,8 @@ class ScoreResult:
     red_flags: list[DimResult] = field(default_factory=list)
     missing: list[str] = field(default_factory=list)
     scale_max: int = 10
+    funding_signal: dict | None = None   # composite from signals.funding
+    market_signal: dict | None = None    # composite from signals.market
 
     def dim(self, key: str) -> DimResult | None:
         return next((d for d in self.dims if d.key == key), None)
@@ -83,20 +86,33 @@ def score_profile(profile: dict, rubric: dict | None = None) -> ScoreResult:
     dim_defs: dict = rubric["dimensions"]
     overrides: dict = profile.get("overrides") or {}
     raw_scores: dict = profile.get("scores") or {}
+    signals: dict = profile.get("signals") or {}
+    hints: dict = signals.get("dimension_hints") or {}
 
     dims: list[DimResult] = []
     missing: list[str] = []
 
     for key, d in dim_defs.items():
         entry = raw_scores.get(key) or {}
-        # An override is a bare number that pins the score.
+        hint = hints.get(key) or {}
+        # Precedence: manual override > manual score > data-backed signal > missing.
         override_val = _coerce_score(overrides.get(key), scale_max)
         base_val = _coerce_score(entry.get("score"), scale_max)
+        hint_val = _coerce_score(hint.get("score"), scale_max)
 
-        value = override_val if override_val is not None else base_val
-        if value is None:
+        if override_val is not None:
+            value, kind = override_val, "override"
+            conf, ev, src = entry.get("confidence", "manual"), entry.get("evidence", ""), entry.get("source", "")
+        elif base_val is not None:
+            value, kind = base_val, "manual"
+            conf, ev, src = entry.get("confidence", "unknown"), entry.get("evidence", ""), entry.get("source", "")
+        elif hint_val is not None:
+            value, kind = hint_val, "signal"
+            conf, ev, src = hint.get("confidence", "signal"), hint.get("evidence", ""), hint.get("source", "")
+        else:
+            value, kind = 0.0, "missing"
+            conf, ev, src = "none", "", ""
             missing.append(key)
-            value = 0.0  # missing data scores as zero so gaps hurt, not flatter
 
         dims.append(
             DimResult(
@@ -104,10 +120,11 @@ def score_profile(profile: dict, rubric: dict | None = None) -> ScoreResult:
                 title=d.get("title", key),
                 weight=float(d.get("weight", 0)),
                 raw=value,
-                confidence=str(entry.get("confidence", "unknown")),
-                evidence=str(entry.get("evidence", "")).strip(),
-                source=str(entry.get("source", "")).strip(),
-                overridden=override_val is not None,
+                confidence=str(conf),
+                evidence=str(ev).strip(),
+                source=str(src).strip(),
+                overridden=kind == "override",
+                source_kind=kind,
             )
         )
 
@@ -140,6 +157,8 @@ def score_profile(profile: dict, rubric: dict | None = None) -> ScoreResult:
         red_flags=red_flags,
         missing=missing,
         scale_max=scale_max,
+        funding_signal=signals.get("funding"),
+        market_signal=signals.get("market"),
     )
 
 

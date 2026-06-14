@@ -102,6 +102,38 @@ def _bar(raw: float, scale_max: int, width: int = 10) -> str:
     return "█" * filled + "░" * (width - filled)
 
 
+def _mark(d) -> str:
+    if d.source_kind == "override":
+        return "*"
+    if d.source_kind == "signal":
+        return "ƒ"
+    return ""
+
+
+def _signal_summary(sig: dict | None) -> str:
+    """One-line component breakdown for a funding/market signal dict."""
+    if not sig:
+        return ""
+    comp = sig.get("components") or {}
+    parts = [f"{k} {v:.0f}" for k, v in comp.items()]
+    return ", ".join(parts)
+
+
+def signals_block(r) -> list[str]:
+    """Lines describing data-backed signals, or [] if none."""
+    lines: list[str] = []
+    f, m = r.funding_signal, r.market_signal
+    if f and f.get("score") is not None:
+        lines.append(f"Funding health   {f['score']:.1f}/10   ({_signal_summary(f)})")
+        if f.get("evidence"):
+            lines.append(f"  {f['evidence']}")
+    if m and m.get("score") is not None:
+        lines.append(f"Market signal    {m['score']:.1f}/10   ({_signal_summary(m)})")
+        if m.get("evidence"):
+            lines.append(f"  {m['evidence']}")
+    return lines
+
+
 def _print_rich(r: ScoreResult) -> None:
     c = Console()
     color = _band_color(r.band_label)
@@ -128,7 +160,7 @@ def _print_rich(r: ScoreResult) -> None:
     t.add_column("Wt", justify="right")
     t.add_column("Conf", justify="center")
     for d in r.dims:
-        sc = f"{d.raw:.0f}" + ("*" if d.overridden else "")
+        sc = f"{d.raw:.0f}{_mark(d)}"
         scolor = "green" if d.raw >= 7 else "yellow" if d.raw >= 4 else "red"
         t.add_row(
             d.title,
@@ -138,6 +170,11 @@ def _print_rich(r: ScoreResult) -> None:
             d.confidence[:4],
         )
     c.print(t)
+
+    sig_lines = signals_block(r)
+    if sig_lines:
+        c.print(Panel("\n".join(sig_lines), title="Data signals (EDGAR / Trends)",
+                      border_style="blue", box=box.ROUNDED))
 
     c.print(Panel(market_verdict(r), title="Is it good for the market?",
                   border_style="cyan", box=box.ROUNDED))
@@ -163,8 +200,13 @@ def _print_rich(r: ScoreResult) -> None:
     if r.missing:
         c.print(f"[yellow]Note:[/yellow] no data for {len(r.missing)} dimension(s): "
                 f"{', '.join(r.missing)} (scored 0 — fill them in to improve accuracy).")
-    if any(d.overridden for d in r.dims):
-        c.print("[dim]* = manual override[/dim]")
+    legend = []
+    if any(d.source_kind == "override" for d in r.dims):
+        legend.append("* = manual override")
+    if any(d.source_kind == "signal" for d in r.dims):
+        legend.append("ƒ = data-backed signal (EDGAR/Trends)")
+    if legend:
+        c.print(f"[dim]{'   '.join(legend)}[/dim]")
 
 
 def _print_plain(r: ScoreResult) -> None:
@@ -179,10 +221,16 @@ def _print_plain(r: ScoreResult) -> None:
         print(f"Market: {r.market}" + (f"   as of {r.as_of}" if r.as_of else ""))
     print(line)
     for d in r.dims:
-        star = "*" if d.overridden else " "
-        print(f"  {d.raw:>4.0f}/10 {star} {_bar(d.raw, r.scale_max)}  "
+        mk = _mark(d) or " "
+        print(f"  {d.raw:>4.0f}/10 {mk} {_bar(d.raw, r.scale_max)}  "
               f"{d.title:<34} (wt {d.weight:.0f}, {d.confidence})")
     print(line)
+    sig_lines = signals_block(r)
+    if sig_lines:
+        print("DATA SIGNALS (EDGAR / Trends):")
+        for ln in sig_lines:
+            print(("  " + ln) if not ln.startswith("  ") else ln)
+        print(line)
     print("IS IT GOOD FOR THE MARKET?")
     print("  " + market_verdict(r))
     if r.red_flags:
@@ -216,6 +264,17 @@ def to_markdown(r: ScoreResult) -> str:
     out.append(f"**Market fit (demand-side): {r.market_fit:.0f}/100**\n")
     out.append(f"> **Is it good for the market?** {market_verdict(r)}\n")
 
+    if (r.funding_signal and r.funding_signal.get("score") is not None) or \
+       (r.market_signal and r.market_signal.get("score") is not None):
+        out.append("## Data signals (EDGAR / Google Trends)\n")
+        for label, sig in (("Funding health", r.funding_signal), ("Market signal", r.market_signal)):
+            if sig and sig.get("score") is not None:
+                comp = ", ".join(f"{k} {v:.0f}" for k, v in (sig.get("components") or {}).items())
+                out.append(f"- **{label}: {sig['score']:.1f}/10** ({comp})  ")
+                if sig.get("evidence"):
+                    out.append(f"  {sig['evidence']}")
+        out.append("")
+
     out.append("## Dimension scores\n")
     out.append("| Dimension | Score | Weight | Confidence | Evidence |")
     out.append("|---|---|---|---|---|")
@@ -223,8 +282,8 @@ def to_markdown(r: ScoreResult) -> str:
         ev = (d.evidence or "").replace("|", "\\|").replace("\n", " ")
         if len(ev) > 220:
             ev = ev[:217] + "..."
-        star = " *(override)*" if d.overridden else ""
-        out.append(f"| {d.title} | {d.raw:.0f}/10{star} | {d.weight:.0f} | {d.confidence} | {ev} |")
+        tag = {"override": " *(override)*", "signal": " *(signal)*"}.get(d.source_kind, "")
+        out.append(f"| {d.title} | {d.raw:.0f}/10{tag} | {d.weight:.0f} | {d.confidence} | {ev} |")
     out.append("")
 
     if r.red_flags:

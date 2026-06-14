@@ -1,0 +1,134 @@
+company: Commonwealth Fusion Systems
+one_liner: ''
+sector: ''
+market: grid-scale fusion power
+as_of: ''
+facts:
+  tam_usd: null
+  cagr_pct: null
+  funding_raised_usd: 1816074299.0
+  stage: null
+  founded: null
+  trl: null
+  patents: null
+  regulatory_pathway: null
+  years_to_revenue: null
+scores:
+  market_size:
+    score: null
+    confidence: unknown
+    evidence: ''
+    source: ''
+  market_timing:
+    score: null
+    confidence: unknown
+    evidence: ''
+    source: ''
+  customer_pull:
+    score: null
+    confidence: unknown
+    evidence: ''
+    source: ''
+  moat:
+    score: null
+    confidence: unknown
+    evidence: ''
+    source: ''
+  trl:
+    score: null
+    confidence: unknown
+    evidence: ''
+    source: ''
+  ip_data:
+    score: null
+    confidence: unknown
+    evidence: ''
+    source: ''
+  capital_intensity:
+    score: null
+    confidence: unknown
+    evidence: ''
+    source: ''
+  regulatory_risk:
+    score: null
+    confidence: unknown
+    evidence: ''
+    source: ''
+  team_fit:
+    score: null
+    confidence: unknown
+    evidence: ''
+    source: ''
+overrides: {}
+signals:
+  funding:
+    score: 7.1
+    components:
+      amount: 10
+      momentum: 2.0
+      rounds: 8.0
+      investor_quality: 9.5
+      capital_adequacy: 7.0
+    evidence: 'EDGAR (Commonwealth Fusion Systems LLC, CIK 0001744079): largest Form D reports $1816.1M
+      sold; 4 Form D filing(s); last 54 months ago; notable-investor match scores 10/10; raised vs. capital
+      needed scores 7/10.'
+    facts:
+      edgar_name: Commonwealth Fusion Systems LLC
+      cik: 0001744079
+      form_d_count: 4
+      headline_amount_sold_usd: 1816074299.0
+      last_filing: '2021-12-02'
+      months_since_last: 54.4
+      industry_group: Other Energy
+      filings:
+      - date: '2021-12-02'
+        amount_sold: 1816074299.0
+        accession: 0001744079-21-000001
+      - date: '2020-05-26'
+        amount_sold: 80600007.0
+        accession: 0001744079-20-000001
+      - date: '2019-07-01'
+        amount_sold: 114999971.0
+        accession: 0001744079-19-000002
+      - date: '2018-06-27'
+        amount_sold: 64594246.0
+        accession: 0001744079-18-000002
+    sources:
+    - SEC EDGAR Form D
+    - https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001744079&type=D
+  market:
+    score: 7.2
+    components:
+      size: 8.0
+      growth: 3.0
+      competition: 8.0
+      demand: 9.0
+    evidence: 'Market signals: TAM $40.0B -> 8/10; CAGR 6% -> 3/10; 12 funded competitors -> 8/10; search
+      interest 3.66x -> 9/10.'
+    facts:
+      trend_first_avg: 19.8
+      trend_last_avg: 75.2
+      trend_ratio: 3.66
+      trend_points: 53
+    sources:
+    - 'Google Trends: ''fusion energy'' (12mo)'
+  dimension_hints:
+    capital_intensity:
+      score: 7
+      confidence: med
+      evidence: 'EDGAR (Commonwealth Fusion Systems LLC, CIK 0001744079): largest Form D reports $1816.1M
+        sold; 4 Form D filing(s); last 54 months ago; notable-investor match scores 10/10; raised vs.
+        capital needed scores 7/10.'
+      source: SEC EDGAR Form D; https://www.sec.gov/cgi-bin/browse-edgar?action=getcompany&CIK=0001744079&type=D
+    market_size:
+      score: 6
+      confidence: med
+      evidence: 'Market signals: TAM $40.0B -> 8/10; CAGR 6% -> 3/10; 12 funded competitors -> 8/10; search
+        interest 3.66x -> 9/10.'
+      source: 'Google Trends: ''fusion energy'' (12mo)'
+    market_timing:
+      score: 9
+      confidence: low
+      evidence: 'Google Trends demand momentum. Market signals: TAM $40.0B -> 8/10; CAGR 6% -> 3/10; 12
+        funded competitors -> 8/10; search interest 3.66x -> 9/10.'
+      source: 'Google Trends: ''fusion energy'' (12mo)'

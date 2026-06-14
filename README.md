@@ -11,13 +11,22 @@ number is consistent, auditable, and tunable. You can override anything by hand.
 ## How it works
 
 ```
-  ┌─ gather (Claude + web search) ─┐   ┌─ score (pure Python) ─┐
-  │ research the company & market  │   │ weighted rollup       │
-  │ extract facts + 0-10 scores    │ → │ market-fit subscore   │ → report (terminal + .md)
-  │ with evidence & citations      │   │ red flags + verdict   │
-  └────────────────────────────────┘   └───────────────────────┘
-        needs ANTHROPIC_API_KEY              fully offline
+  ┌─ gather (Claude + web search) ─┐
+  │ research company & market      │┐
+  │ facts + 0-10 scores + evidence ││
+  └────────────────────────────────┘│   ┌─ score (pure Python) ─┐
+        needs ANTHROPIC_API_KEY      ├─→ │ weighted rollup       │
+  ┌─ signals (free public data) ───┐│   │ market-fit subscore   │ → report (terminal + .md)
+  │ funding  <- SEC EDGAR Form D   ││   │ red flags + verdict   │
+  │ market   <- Google Trends      │┘   └───────────────────────┘
+  └────────────────────────────────┘
+        no API key needed
 ```
+
+Three inputs feed the same deterministic scorer. Per dimension the engine
+takes, in order: a **manual override**, then a **manual/LLM score**, then a
+**data-backed signal**, then 0 if nothing is known. So hard data fills gaps
+but never silently overrides your judgment.
 
 The rubric (`rubric.yaml`) is the brain: 9 dimensions, fixed weights summing to 100,
 and explicit 0/3/5/8/10 anchors. Edit it and every future score reflects the change.
@@ -50,12 +59,39 @@ export ANTHROPIC_API_KEY=sk-ant-...
 ./dtscore new mycompany --company "My Co" --market "..."   # blank template to fill in
 ./dtscore score companies/mycompany.yaml
 
+# Pull data-backed funding + market signals (no key needed)
+./dtscore signals companies/cfs.yaml --cik 0001744079 --keyword "fusion energy" \
+  --tam 40000000000 --cagr 6 --competitors 12 --capital-needed 3000000000 --score
+
 # Inspect or tune the framework
 ./dtscore rubric
 ```
 
-Commands `score`, `new`, and `rubric` work with **no API key and no network**.
-Only `gather` / `run` call Claude.
+Commands `score`, `new`, `rubric`, and `signals` work with **no API key**.
+Only `gather` / `run` call Claude. (`signals` needs network for EDGAR/Trends.)
+
+## Data-backed signals
+
+`dtscore signals <profile>` computes two composite scores from free public
+data and writes them into the profile (plus per-dimension hints that fill any
+unscored dimension):
+
+**Funding health** (SEC EDGAR Form D, no key):
+- largest reported amount sold, number of Form D filings, recency (momentum)
+- investor quality: named investors matched against a curated allowlist in
+  `signals/funding.py` (edit `STRATEGIC_INVESTORS`)
+- optional capital adequacy: `--capital-needed` vs. raised
+- maps to the `capital_intensity` dimension
+
+**Market attractiveness** (Google Trends + your numbers):
+- size (log-scaled TAM), growth (CAGR), competitive density (U-shaped on
+  `--competitors`), and live search-interest momentum from Google Trends
+- maps to `market_size` and `market_timing`
+
+EDGAR name search is noisy (it returns SPVs and funds), so pass `--cik` to pin
+the right filer. Run `./dtscore signals "<name>"` with no `--cik` first and it
+prints the candidate CIKs. Set a real contact in `SEC_EDGAR_UA` (EDGAR asks for
+one): `export SEC_EDGAR_UA="dtscore (you@example.com)"`.
 
 ### Overrides
 
@@ -73,9 +109,12 @@ and are listed at the bottom of the report.
 
 - `rubric.yaml` — dimensions, weights, anchors, verdict bands (edit this to tune the model)
 - `gather.py` — Claude + web search → structured profile (model `claude-opus-4-8`, adaptive thinking)
+- `signals/funding.py` — SEC EDGAR Form D → funding-health signal (stdlib only)
+- `signals/market.py` — Google Trends + size/growth/competition → market signal
 - `scoring.py` — deterministic weighted scoring engine (no model calls)
 - `report.py` — terminal + markdown rendering, deterministic market verdict
 - `dtscore.py` / `dtscore` — CLI and wrapper
+- `tests/test_signals.py` — offline tests for the deterministic mappers + precedence
 - `companies/` — saved profiles (YAML, hand-editable) · `reports/` — generated markdown
 - `companies/helixferm.yaml` — a worked example you can score right now
 

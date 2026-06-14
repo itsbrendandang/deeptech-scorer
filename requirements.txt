@@ -2,3 +2,6 @@ pyyaml>=6.0
 rich>=13.0
 anthropic>=0.69.0
 pydantic>=2.0
+pytrends>=4.9.0   # market demand signal (Google Trends)
+certifi>=2023.0   # TLS CA bundle for SEC EDGAR calls (needed on macOS system Python)
+

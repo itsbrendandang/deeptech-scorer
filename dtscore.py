@@ -111,6 +111,89 @@ def cmd_run(args) -> int:
     return 0
 
 
+def _resolve_profile_path(ref: str) -> Path | None:
+    p = Path(ref)
+    if p.exists():
+        return p
+    alt = COMPANIES / f"{_slug(ref)}.yaml"
+    return alt if alt.exists() else None
+
+
+def cmd_signals(args) -> int:
+    from signals import funding_signals, market_signals
+
+    path = _resolve_profile_path(args.profile)
+    if not path:
+        print(f"Profile not found: {args.profile} (create one with `dtscore new`)", file=sys.stderr)
+        return 1
+    profile = _load_yaml(path)
+    facts = profile.get("facts") or {}
+
+    company = args.query or profile.get("company") or path.stem
+    keyword = args.keyword or profile.get("market") or company
+    investors = [s.strip() for s in args.investors.split(",")] if args.investors else \
+        (facts.get("investors") if isinstance(facts.get("investors"), list) else None)
+    tam = args.tam if args.tam is not None else facts.get("tam_usd")
+    cagr = args.cagr if args.cagr is not None else facts.get("cagr_pct")
+    competitors = args.competitors if args.competitors is not None else facts.get("competitor_count")
+
+    print(f"  Funding: querying SEC EDGAR for '{company}'…")
+    f = funding_signals(company, cik=args.cik, investors=investors,
+                        capital_needed_usd=args.capital_needed)
+    if f.score is None and f.candidates:
+        print("  EDGAR match is ambiguous. Re-run with --cik <CIK> for the right filer:")
+        for c in f.candidates[:8]:
+            flag = " (SPV/fund?)" if c["noise"] else ""
+            print(f"    CIK {c['cik']}  {c['name']}  [last {c['last']}, {c['count']} filing(s)]{flag}")
+    elif f.score is None:
+        print(f"  Funding: {f.evidence}")
+    else:
+        print(f"  Funding health: {f.score}/10 — {f.evidence}")
+
+    print(f"  Market: '{keyword}'" + ("" if not args.no_trends else " (Trends skipped)") + "…")
+    m = market_signals(keyword, tam_usd=tam, cagr_pct=cagr,
+                       competitor_count=competitors, use_trends=not args.no_trends)
+    if m.score is not None:
+        print(f"  Market signal: {m.score}/10 — {m.evidence}")
+    else:
+        print(f"  Market: {m.evidence}")
+
+    # Assemble the signals block + dimension hints (override > manual > signal).
+    hints: dict = {}
+    if f.score is not None and (fh := f.dimension_hint()):
+        hints["capital_intensity"] = fh
+    hints.update(m.dimension_hints())
+
+    sig_block: dict = {}
+    if f.score is not None:
+        sig_block["funding"] = {"score": f.score, "components": f.components,
+                                "evidence": f.evidence, "facts": f.facts, "sources": f.sources}
+        if f.facts.get("headline_amount_sold_usd"):
+            facts["funding_raised_usd"] = f.facts["headline_amount_sold_usd"]
+    if m.score is not None:
+        sig_block["market"] = {"score": m.score, "components": m.components,
+                               "evidence": m.evidence, "facts": m.facts, "sources": m.sources}
+    if hints:
+        sig_block["dimension_hints"] = hints
+
+    if sig_block:
+        profile["signals"] = sig_block
+        profile["facts"] = facts
+        _dump_yaml(profile, path)
+        print(f"\nSignals written -> {path}")
+    else:
+        print("\nNo signals could be computed (no EDGAR match and no market data).")
+
+    if args.score:
+        result = score_profile(profile, load_rubric())
+        print_report(result)
+        md_path = REPORTS / f"{path.stem}.md"
+        md_path.parent.mkdir(parents=True, exist_ok=True)
+        md_path.write_text(to_markdown(result))
+        print(f"\nMarkdown report -> {md_path}")
+    return 0
+
+
 def cmd_new(args) -> int:
     company = args.company or args.slug.replace("-", " ").title()
     profile = blank_profile(company=company, market=args.market or "")
@@ -165,6 +248,21 @@ def main(argv=None) -> int:
     s.add_argument("--md", help="write a markdown report to this path")
     s.add_argument("--save-md", action="store_true", help="auto-save markdown to reports/")
     s.set_defaults(func=cmd_score)
+
+    sg = sub.add_parser("signals", help="pull data-backed funding (SEC EDGAR) + market (Google Trends) signals")
+    sg.add_argument("profile", help="path to profile YAML or a company slug")
+    sg.add_argument("--query", help="company name for EDGAR (default: profile company)")
+    sg.add_argument("--cik", help="EDGAR CIK to disambiguate the filer")
+    sg.add_argument("--keyword", help="Google Trends search term (default: profile market)")
+    sg.add_argument("--investors", help="comma-separated investor names for the quality match")
+    sg.add_argument("--capital-needed", type=float, dest="capital_needed",
+                    help="USD needed to commercialize (enables the adequacy component)")
+    sg.add_argument("--tam", type=float, help="TAM in USD (default: profile facts)")
+    sg.add_argument("--cagr", type=float, help="market CAGR %% (default: profile facts)")
+    sg.add_argument("--competitors", type=int, help="count of funded competitors")
+    sg.add_argument("--no-trends", action="store_true", help="skip the Google Trends call")
+    sg.add_argument("--score", action="store_true", help="re-score and print the report after")
+    sg.set_defaults(func=cmd_signals)
 
     n = sub.add_parser("new", help="create a blank profile template to fill by hand")
     n.add_argument("slug")
