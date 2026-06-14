@@ -1,5 +1,9 @@
 # dtscore — deep tech company & market evaluator
 
+![tests](https://github.com/itsbrendandang/deeptech-scorer/actions/workflows/ci.yml/badge.svg)
+![license: MIT](https://img.shields.io/badge/license-MIT-blue.svg)
+![python](https://img.shields.io/badge/python-3.12+-blue.svg)
+
 A CLI that scores any deep tech company against a transparent, deep-tech-specific
 rubric and answers one question directly: **is this even good for the market?**
 
@@ -7,6 +11,13 @@ It is **hybrid**: Claude (with web search) auto-pulls the messy facts — market
 funding, TRL, competitors, regulatory path — and proposes a score per dimension with
 evidence. Deterministic code (not the model) does the weighted rollup, so the final
 number is consistent, auditable, and tunable. You can override anything by hand.
+
+**What this demonstrates (engineering notes):** a deliberate split between *fuzzy* and
+*deterministic* work — an LLM gathers messy facts, but a fixed, auditable rubric does the
+scoring, so results are reproducible and the weights are inspectable. It integrates real
+public data (SEC EDGAR Form D for funding, Google Trends for demand), keeps a clean
+signal → score → report separation, degrades gracefully with no API key/network, and
+ships with tests.
 
 ## How it works
 
@@ -123,7 +134,7 @@ and are listed at the bottom of the report.
 - The model proposes per-dimension scores; **the rollup math is fixed code**, so the
   overall number can't drift from the weights. But the inputs are still model judgments —
   treat auto-pulled facts as leads to verify, not ground truth.
-- Designed to evaluate *any* deep tech company, including your own. Run Bioqore through it.
+- Designed to evaluate *any* deep tech company, including your own.
 - Setup: `python3 -m venv .venv && ./.venv/bin/pip install -r requirements.txt` (already done here).
 
 ## License
