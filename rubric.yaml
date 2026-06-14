@@ -1,0 +1,137 @@
+# Deep Tech Company / Market Evaluation Rubric
+#
+# Every dimension is scored 0-10 where HIGHER IS ALWAYS BETTER
+# (e.g. a 10 on capital_intensity means CHEAP/fast to commercialize,
+#  a 10 on regulatory_risk means a CLEAN/low-risk path). The anchors
+# below define what each score means so judgments stay consistent.
+#
+# Weights sum to 100. The overall score is the weighted average of the
+# dimension scores, scaled to 0-100. Edit weights/anchors freely — the
+# scoring engine reads them at runtime, so the rubric IS the model.
+
+meta:
+  name: "Deep Tech Scorecard"
+  version: 1
+  scale_max: 10
+
+# Pillars are just groupings for the report. The market_fit subscore
+# (the "is this even good for the market?" answer) is computed from the
+# dimensions listed under market_fit_dimensions below.
+pillars:
+  market:    [market_size, market_timing, customer_pull]
+  moat:      [moat, ip_data, trl]
+  execution: [capital_intensity, regulatory_risk, team_fit]
+
+market_fit_dimensions: [market_size, market_timing, customer_pull, moat]
+
+# Verdict bands applied to the overall 0-100 score.
+bands:
+  - {min: 80, label: "STRONG",    note: "High-conviction market. Go deep."}
+  - {min: 65, label: "PROMISING", note: "Real opportunity; diligence the weak spots before committing."}
+  - {min: 50, label: "MIXED",     note: "Material risks offset the upside. Proceed only with a thesis on the gaps."}
+  - {min: 35, label: "WEAK",      note: "Structural problems. Likely a pass."}
+  - {min: 0,  label: "AVOID",     note: "Market or execution is fundamentally unattractive."}
+
+# Any dimension at or below this score is surfaced as a red flag.
+red_flag_at: 3
+
+dimensions:
+
+  market_size:
+    title: "Market size & growth"
+    weight: 14
+    question: "Is the addressable market large and growing fast enough to build a venture-scale company?"
+    anchors:
+      0:  "Niche / shrinking; SAM well under $100M."
+      3:  "Small or flat market (~$100M-$500M SAM, low single-digit growth)."
+      5:  "Solid but unspectacular ($500M-$2B SAM, ~10% CAGR)."
+      8:  "Large and growing ($2B-$10B SAM, 15-25% CAGR)."
+      10: "Huge, fast-expanding, or a new category being created (>$10B, >25% CAGR)."
+
+  market_timing:
+    title: "Market timing (why now)"
+    weight: 12
+    question: "What changed — tech, cost curve, regulation, behavior — that makes this viable and urgent NOW vs. 5 years ago?"
+    anchors:
+      0:  "No 'why now'; this could have been built anytime or is too early by years."
+      3:  "Weak catalyst; timing is a bet on the future, not a present shift."
+      5:  "A real but gradual enabler (steady cost decline, slow regulatory thaw)."
+      8:  "A clear recent inflection (an enabling tech matured, a mandate landed, a cost crossed a threshold)."
+      10: "A sharp, dated inflection competitors haven't priced in yet — a narrow open window."
+
+  customer_pull:
+    title: "Customer pull & willingness to pay"
+    weight: 14
+    question: "Is there real demand with budget and urgency, or is this technology push looking for a use?"
+    anchors:
+      0:  "Pure tech push; no identified buyer, budget, or acute pain."
+      3:  "Interest but no budget line; 'nice to have', long sales cycles, pilots that don't convert."
+      5:  "Clear pain and a budget owner, but switching cost or inertia is high."
+      8:  "Acute, funded pain; customers are actively seeking a solution and will pay a premium."
+      10: "Desperate, recurring pain with money already allocated; inbound demand / waitlist."
+
+  moat:
+    title: "Defensible moat / 10x advantage"
+    weight: 14
+    question: "Is the advantage durable and an order of magnitude better than the status quo — not just incrementally better?"
+    anchors:
+      0:  "Easily copied; marginal improvement over incumbents."
+      3:  "Some edge but fast-follow risk is high; advantage is a feature, not a moat."
+      5:  "Meaningful 2-3x advantage with a few years of lead time."
+      8:  "10x on a dimension customers care about, protected by hard tech / process know-how."
+      10: "Step-change advantage compounding over time (data, scale economics, process depth) that widens with use."
+
+  trl:
+    title: "Technology readiness (lab -> product)"
+    weight: 10
+    question: "How far is the core technology from a manufacturable, scalable product? (TRL 1-9)"
+    anchors:
+      0:  "Concept / basic principles only (TRL 1-2). Science risk is existential."
+      3:  "Validated in the lab but not in a relevant environment (TRL 3-4)."
+      5:  "Prototype demonstrated in a relevant environment (TRL 5-6)."
+      8:  "System demonstrated in operation; pilot-scale works (TRL 7-8)."
+      10: "Proven at production scale; the unknown is go-to-market, not whether it works (TRL 9)."
+
+  ip_data:
+    title: "IP & data defensibility"
+    weight: 8
+    question: "Is the advantage protected by patents, proprietary data, or know-how that's hard to replicate?"
+    anchors:
+      0:  "No IP, no proprietary data; anyone with capital can replicate."
+      3:  "Thin or pending IP; advantage rests on speed alone."
+      5:  "Some granted patents or a modest data advantage."
+      8:  "Strong patent estate or a compounding proprietary dataset / process."
+      10: "Dominant, defensible IP or a data moat that competitors structurally cannot match."
+
+  capital_intensity:
+    title: "Capital efficiency & time-to-revenue"
+    weight: 10
+    question: "How much capital and time to reach commercial revenue? (Higher score = cheaper/faster.)"
+    anchors:
+      0:  "Enormous capex, decade-plus to revenue (e.g. new fab, novel reactor at scale)."
+      3:  "Capital-heavy, 6-10 years to meaningful revenue."
+      5:  "Moderate capex, 3-5 years to revenue."
+      8:  "Capital-light for deep tech; revenue within ~2-3 years."
+      10: "Asset-light / fast to revenue; software-like economics on a hard-tech edge."
+
+  regulatory_risk:
+    title: "Regulatory & scientific risk"
+    weight: 8
+    question: "How clear and de-risked is the approval / validation path? (Higher score = lower risk.)"
+    anchors:
+      0:  "Unprecedented regulatory path or core science still unproven at scale; binary outcome."
+      3:  "Long, uncertain approval pathway (e.g. novel-modality clinical, new safety class)."
+      5:  "Known but lengthy pathway with clear precedent."
+      8:  "Well-trodden pathway or light regulation; main risk is execution."
+      10: "Minimal regulatory burden; science is settled and reproducible."
+
+  team_fit:
+    title: "Team & domain fit"
+    weight: 10
+    question: "Can this team bridge deep science to a commercial product — rare technical depth plus go-to-market ability?"
+    anchors:
+      0:  "Missing the core technical or commercial capability; no domain credibility."
+      3:  "Strong in one half (science OR business) with a clear gap in the other."
+      5:  "Credible team; covers the basics but unproven at scaling a company."
+      8:  "Rare technical depth paired with commercial instinct and relevant track record."
+      10: "World-class founder-market fit; the team others in the field would bet on."

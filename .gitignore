@@ -1,0 +1,17 @@
+# Python
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+
+# Secrets / local config
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+
+# Generated reports (regenerate from companies/*.yaml)
+reports/*
+!reports/.gitkeep

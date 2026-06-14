@@ -1,0 +1,7 @@
+#!/usr/bin/env bash
+# Thin wrapper so you can run ./dtscore from anywhere using the project venv.
+set -euo pipefail
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+PY="$DIR/.venv/bin/python"
+[ -x "$PY" ] || PY="$(command -v python3)"
+exec "$PY" "$DIR/dtscore.py" "$@"

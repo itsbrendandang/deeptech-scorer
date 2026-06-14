@@ -1,0 +1,62 @@
+company: HelixFerm
+one_liner: Precision-fermentation platform producing animal-free dairy proteins at industrial scale.
+sector: Synthetic biology / food
+market: Animal-free dairy and functional protein ingredients
+as_of: 2026-06-13
+facts:
+  tam_usd: 8000000000
+  cagr_pct: 22
+  funding_raised_usd: 55000000
+  stage: Series B
+  founded: 2020
+  trl: 6
+  patents: 11
+  regulatory_pathway: FDA GRAS self-affirmation
+  years_to_revenue: 3
+scores:
+  market_size:
+    score: 8
+    confidence: high
+    evidence: "Functional/animal-free protein ingredients ~$8B SAM growing ~22% as CPG reformulates; clear pull from dairy majors."
+    source: "https://example.com/altprotein-market-2026"
+  market_timing:
+    score: 7
+    confidence: med
+    evidence: "Fermentation cost/kg fell sharply post-2023 and GRAS precedents now exist; window is real but several rivals also moving."
+    source: "https://example.com/precision-ferm-costs"
+  customer_pull:
+    score: 6
+    confidence: med
+    evidence: "Two signed LOIs with mid-size dairy brands and one paid pilot, but conversion to volume contracts unproven; switching cost high."
+    source: ""
+  moat:
+    score: 7
+    confidence: med
+    evidence: "Proprietary strain + downstream purification gives ~3x yield vs published benchmarks; defensible for a few years, not a decade."
+    source: "https://example.com/helixferm-yield"
+  trl:
+    score: 6
+    confidence: high
+    evidence: "Demonstrated at 10,000L pilot; 200,000L commercial scale-up not yet proven (classic scale-up risk)."
+    source: ""
+  ip_data:
+    score: 7
+    confidence: med
+    evidence: "11 granted/pending patents on strain engineering and a growing proprietary fermentation dataset."
+    source: ""
+  capital_intensity:
+    score: 3
+    confidence: high
+    evidence: "Commercial-scale bioreactor capacity is very capex-heavy; needs ~$150M+ to reach volume, a real financing risk."
+    source: ""
+  regulatory_risk:
+    score: 6
+    confidence: med
+    evidence: "GRAS self-affirmation is a known pathway with precedent, but novel-protein scrutiny could add delay."
+    source: ""
+  team_fit:
+    score: 8
+    confidence: high
+    evidence: "Founders pair a strain-engineering PhD with an ex-CPG operator who scaled a prior ingredient brand."
+    source: ""
+overrides: {}
